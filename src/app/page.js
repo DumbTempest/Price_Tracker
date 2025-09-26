@@ -16,19 +16,52 @@ export default function PriceTracker() {
 
   const sampleItems = [
     {
-      id: "B08EXAMPLE",
-      title: "Sample Product — Wireless Headphones",
+      name: "Sample Product — Gaming Mouse Red",
+      product_image: "/vercel.svg",
       url: "https://www.amazon.in/dp/B08EXAMPLE",
-      price: 2999,
-      lastChecked: new Date().toISOString(),
+      catagory: "xyz",
+      history: [
+        { price_INR: 1499, price_USD: 20, date: new Date().toISOString() },
+        { price_INR: 1399, price_USD: 18, date: new Date(Date.now() - 86400000).toISOString() },
+        { price_INR: 1599, price_USD: 22, date: new Date(Date.now() - 172800000).toISOString() },
+      ]
     },
     {
-      id: "B07EXAMPLE",
-      title: "Sample Product — Mechanical Keyboard",
-      url: "https://www.amazon.in/dp/B07EXAMPLE",
-      price: 4499,
-      lastChecked: new Date().toISOString(),
+      name: "Sample Product — Gaming Mouse Blue",
+      product_image: "/vercel.svg",
+      url: "https://www.amazon.in/dp/B08EXAMPLE2",
+      catagory: "xyz",
+      history: [
+        { price_INR: 1299, price_USD: 20, date: new Date().toISOString() },
+        { price_INR: 1199, price_USD: 18, date: new Date(Date.now() - 86400000).toISOString() },
+        { price_INR: 1099, price_USD: 22, date: new Date(Date.now() - 172800000).toISOString() },
+      ]
     },
+    {
+      name: "Sample Product — Bluetooth Speaker",
+      product_image: "/vercel.svg",
+      url: "https://www.amazon.in/dp/B07EXAMPLE",
+      catagory: "abc",
+      history: [
+        { price_INR: 2499, price_USD: 34, date: new Date().toISOString() },
+        { price_INR: 2399, price_USD: 32, date: new Date(Date.now() - 86400000).toISOString() },
+        { price_INR: 2599, price_USD: 36, date: new Date(Date.now() - 172800000).toISOString() },
+      ]
+    }
+    // {
+    //   id: "B08EXAMPLE",
+    //   title: "Sample Product — Wireless Headphones",
+    //   url: "https://www.amazon.in/dp/B08EXAMPLE",
+    //   price: 2999,
+    //   lastChecked: new Date().toISOString(),
+    // },
+    // {
+    //   id: "B07EXAMPLE",
+    //   title: "Sample Product — Mechanical Keyboard",
+    //   url: "https://www.amazon.in/dp/B07EXAMPLE",
+    //   price: 4499,
+    //   lastChecked: new Date().toISOString(),
+    // },
   ]
 
   const [items, setItems] = useState(() => sampleItems)
@@ -60,27 +93,27 @@ export default function PriceTracker() {
           </h1>
         </header>
 
-       <div className="flex justify-center w-full">
-  <form
-    onSubmit={handleAdd}
-    className="flex gap-3 items-center w-full max-w-4xl p-3 border border-white/10 rounded-2xl bg-neutral-900 shadow-sm"
-  >
-    <Input
-      className="flex-1 bg-black text-white border-white/20 placeholder:text-white/60"
-      placeholder="Paste Amazon product URL or ASIN (e.g. https://www.amazon.in/dp/B08...)"
-      value={query}
-      onChange={(e) => setQuery(e.target.value)}
-      disabled={loading}
-    />
-    <Button
-      type="submit"
-      disabled={loading}
-      className="shrink-0 bg-white text-black hover:bg-gray-200"
-    >
-      {loading ? "Working..." : "Track"}
-    </Button>
-  </form>
-</div>
+        <div className="flex justify-center w-full">
+          <form
+            onSubmit={handleAdd}
+            className="flex gap-3 items-center w-full max-w-4xl p-3 border border-white/10 rounded-2xl bg-neutral-900 shadow-sm"
+          >
+            <Input
+              className="flex-1 bg-black text-white border-white/20 placeholder:text-white/60"
+              placeholder="Paste Amazon product URL or ASIN (e.g. https://www.amazon.in/dp/B08...)"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              disabled={loading}
+            />
+            <Button
+              type="submit"
+              disabled={loading}
+              className="shrink-0 bg-white text-black hover:bg-gray-200"
+            >
+              {loading ? "Working..." : "Track"}
+            </Button>
+          </form>
+        </div>
 
 
         <section className="mt-8 space-y-6">
