@@ -1,16 +1,18 @@
 import mongoose, { Schema, model } from "mongoose";
 
 const historySchema = new Schema({
-    source: { type: String, enum: ["Amazon", "Flipkart"], required: true },
-    price_INR: { type: Number, default: null },
-    price_USD: { type: Number, default: null },
+    price_Amazon_INR: { type: Number, default: null },
+    price_Flipkart_INR: { type: Number, default: null },
+    price_Amazon_USD: { type: Number, default: null },
+    price_Flipkart_USD: { type: Number, default: null },
     date: { type: Date, default: Date.now }
 });
 
 const productSchema = new Schema({
     name: String,
     product_image: String,
-    url: String,
+    url_Amazon: String,
+    url_Flipkart: String,
     category: String,
     history: [historySchema]
 });
