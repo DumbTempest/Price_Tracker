@@ -1,70 +1,35 @@
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import {
-  Card
-} from "@/components/ui/card"
-
-import PriceCard from "@/components/custom/card"
+import PriceCard from "@/components/custom/PriceCard"
+import Header from "@/components/custom/Header"
+import ProductPreviewCard from "@/components/custom/productReviewCard"
 
 export default function PriceTracker() {
   const [query, setQuery] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [Data, setData] = useState([])
 
-  const sampleItems = [
-    {
-      name: "Sample Product — Gaming Mouse Red",
-      product_image: "/vercel.svg",
-      url: "https://www.amazon.in/dp/B08EXAMPLE",
-      catagory: "xyz",
-      history: [
-        { price_INR: 1499, price_USD: 20, date: new Date().toISOString() },
-        { price_INR: 1399, price_USD: 18, date: new Date(Date.now() - 86400000).toISOString() },
-        { price_INR: 1599, price_USD: 22, date: new Date(Date.now() - 172800000).toISOString() },
-      ]
-    },
-    {
-      name: "Sample Product — Gaming Mouse Blue",
-      product_image: "/vercel.svg",
-      url: "https://www.amazon.in/dp/B08EXAMPLE2",
-      catagory: "xyz",
-      history: [
-        { price_INR: 1299, price_USD: 20, date: new Date().toISOString() },
-        { price_INR: 1199, price_USD: 18, date: new Date(Date.now() - 86400000).toISOString() },
-        { price_INR: 1099, price_USD: 22, date: new Date(Date.now() - 172800000).toISOString() },
-      ]
-    },
-    {
-      name: "Sample Product — Bluetooth Speaker",
-      product_image: "/vercel.svg",
-      url: "https://www.amazon.in/dp/B07EXAMPLE",
-      catagory: "abc",
-      history: [
-        { price_INR: 2499, price_USD: 34, date: new Date().toISOString() },
-        { price_INR: 2399, price_USD: 32, date: new Date(Date.now() - 86400000).toISOString() },
-        { price_INR: 2599, price_USD: 36, date: new Date(Date.now() - 172800000).toISOString() },
-      ]
+  useEffect(() => {
+    async function getData() {
+      const res = await fetch('/api/getData')
+      const json = await res.json()
+      setData(json.data)
     }
-    // {
-    //   id: "B08EXAMPLE",
-    //   title: "Sample Product — Wireless Headphones",
-    //   url: "https://www.amazon.in/dp/B08EXAMPLE",
-    //   price: 2999,
-    //   lastChecked: new Date().toISOString(),
-    // },
-    // {
-    //   id: "B07EXAMPLE",
-    //   title: "Sample Product — Mechanical Keyboard",
-    //   url: "https://www.amazon.in/dp/B07EXAMPLE",
-    //   price: 4499,
-    //   lastChecked: new Date().toISOString(),
-    // },
-  ]
+    getData()
+  }, [])
 
-  const [items, setItems] = useState(() => sampleItems)
+  function groupByCategory(items) {
+    return Object.values(
+      items.reduce((acc, it) => {
+        acc[it.category] = acc[it.category] || [];
+        acc[it.category].push(it);
+        return acc;
+      }, {})
+    );
+  }
 
   async function handleAdd(e) {
     e.preventDefault()
@@ -87,13 +52,9 @@ export default function PriceTracker() {
   return (
     <div className="min-h-screen bg-black text-white antialiased p-6 lg:p-12">
       <main className="max-w-7xl mx-auto">
-        <header className="mb-8 text-center">
-          <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight">
-            Price Tracker
-          </h1>
-        </header>
+        <Header products={Data} />
 
-        <div className="flex justify-center w-full">
+        {/* <div className="flex justify-center w-full">
           <form
             onSubmit={handleAdd}
             className="flex gap-3 items-center w-full max-w-4xl p-3 border border-white/10 rounded-2xl bg-neutral-900 shadow-sm"
@@ -113,21 +74,13 @@ export default function PriceTracker() {
               {loading ? "Working..." : "Track"}
             </Button>
           </form>
-        </div>
+        </div> */}
 
 
-        <section className="mt-8 space-y-6">
-          {items.map((it) => (
-            <PriceCard key={it.id} it={it} handleRemove={handleRemove} />
+        <section className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          {Data.map((product) => (
+            <ProductPreviewCard key={product._id} product={product} />
           ))}
-
-          {items.length === 0 && (
-            <Card className="p-6 text-center bg-neutral-900 border border-white/10">
-              <div className="opacity-80 text-sm">
-                No items — add one to start tracking
-              </div>
-            </Card>
-          )}
         </section>
 
         <footer className="mt-10 text-xs text-white/60 text-center">
