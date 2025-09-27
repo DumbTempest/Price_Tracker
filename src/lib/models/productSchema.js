@@ -1,8 +1,9 @@
 import mongoose, { Schema, model } from "mongoose";
 
 const historySchema = new Schema({
-    price_INR: Number,
-    price_USD: Number,
+    source: { type: String, enum: ["Amazon", "Flipkart"], required: true },
+    price_INR: { type: Number, default: null },
+    price_USD: { type: Number, default: null },
     date: { type: Date, default: Date.now }
 });
 

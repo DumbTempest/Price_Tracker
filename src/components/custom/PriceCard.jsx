@@ -27,10 +27,7 @@ export default function ProductCategoryPage({ it, group }) {
   function getPriceStats(history) {
     if (history.length === 0) return null;
 
-    // current should reflect the last entry as-is
     const current = history[history.length - 1].price_INR;
-
-    // filter only for stats
     const prices = history.map((h) => h.price_INR).filter((p) => p != null);
     if (prices.length === 0) return { current, min: null, max: null, avg: null, trend: "stable" };
 
@@ -86,27 +83,42 @@ export default function ProductCategoryPage({ it, group }) {
     })
   );
 
+  const productsByName = group.reduce((acc, product) => {
+    if (!acc[product.name]) {
+      acc[product.name] = { combinedHistory: [] };
+    }
+    acc[product.name].combinedHistory.push(...product.history);
+    return acc;
+  }, {});
+
   const colors = [
     "#667eea", "#764ba2", "#f093fb", "#f5576c",
     "#4facfe", "#00f2fe", "#43e97b", "#38f9d7",
     "#ffecd2", "#fcb69f", "#a8edea", "#fed6e3",
   ];
 
-  const datasets = group.map((p, i) => {
+  const datasets = Object.keys(productsByName).map((productName, i) => {
+    const { combinedHistory } = productsByName[productName];
     const color = colors[i % colors.length];
+    const isMainProduct = productName === it.name;
+
     return {
-      label: p.name,
+      label: productName,
       data: rawDates.map((date) => {
-        const point = p.history.find((h) => h.date === date);
+        const point = combinedHistory.find((h) => h.date === date);
         return point?.price_INR ?? null;
       }),
-      borderColor: color,
-      backgroundColor: color + "80",
+      // Apply conditional styling
+      borderColor: isMainProduct ? color : color + '80', // Faded border for other products
+      backgroundColor: isMainProduct ? color + '80' : color + '30', // More faded fill
+      borderWidth: isMainProduct ? 2.5 : 1.5, // Thicker line for the main product
+      borderDash: isMainProduct ? [] : [5, 5], // Dashed ("slashed out") line for others
+      pointRadius: isMainProduct ? 3 : 0, // Show points only for the main product
+      pointBackgroundColor: color,
       tension: 0.3,
       spanGaps: true,
     };
   });
-
   const chartData = { labels, datasets };
 
   const chartOptions = {
@@ -122,6 +134,7 @@ export default function ProductCategoryPage({ it, group }) {
   };
 
   const categoryStats = getCategoryStats(group);
+  const mainProductLinks = group.filter(p => p.name === it.name);
 
   return (
     <div className="w-full max-w-7xl mx-auto my-2 text-white">
@@ -136,14 +149,20 @@ export default function ProductCategoryPage({ it, group }) {
         </div>
         <h1 className="text-2xl md:text-4xl font-extrabold mb-3 flex flex-wrap items-center gap-3">
           <span className="text-white">{it.name}</span>
-          <Link
-            href={it.url}
-            target="_blank"
-            rel="noreferrer"
-            className="px-3 py-1.5 text-sm rounded-lg bg-yellow-400 text-black font-medium hover:bg-yellow-500 transition"
-          >
-            See on Amazon →
-          </Link>
+          {mainProductLinks.map(p => {
+              const source = p.history[0]?.source;
+              return (
+                  <Link
+                      key={p._id}
+                      href={p.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`px-3 py-1.5 text-sm rounded-lg text-black font-medium transition ${source === "Amazon" ? "bg-yellow-400 hover:bg-yellow-500" : "bg-blue-400 hover:bg-blue-500"}`}
+                  >
+                      See on {source || 'Store'} →
+                  </Link>
+              )
+          })}
         </h1>
         {categoryStats && (
           <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm text-white/80">
@@ -192,10 +211,10 @@ export default function ProductCategoryPage({ it, group }) {
                         )}
                         <span
                           className={`font-bold ${stats.trend === "up"
-                            ? "text-red-400"
-                            : stats.trend === "down"
-                              ? "text-green-400"
-                              : "text-gray-400"
+                              ? "text-red-400"
+                              : stats.trend === "down"
+                                ? "text-green-400"
+                                : "text-gray-400"
                             }`}
                         >
                           {stats.trend === "up" && "↑"}
