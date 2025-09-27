@@ -1,16 +1,13 @@
 'use client'
 
-import { useEffect, useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import PriceCard from "@/components/custom/PriceCard"
+import { useEffect, useState, useRef } from "react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import Header from "@/components/custom/Header"
 import ProductPreviewCard from "@/components/custom/productReviewCard"
 
 export default function PriceTracker() {
-  const [query, setQuery] = useState("")
-  const [loading, setLoading] = useState(false)
   const [Data, setData] = useState([])
+  const rowRefs = useRef({})
 
   useEffect(() => {
     async function getData() {
@@ -22,31 +19,20 @@ export default function PriceTracker() {
   }, [])
 
   function groupByCategory(items) {
-    return Object.values(
-      items.reduce((acc, it) => {
-        acc[it.category] = acc[it.category] || [];
-        acc[it.category].push(it);
-        return acc;
-      }, {})
-    );
+    return items.reduce((acc, it) => {
+      acc[it.category] = acc[it.category] || []
+      acc[it.category].push(it)
+      return acc
+    }, {})
   }
 
-  async function handleAdd(e) {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
-    try {
-      await new Promise((res) => setTimeout(res, 2000))
-      setQuery("")
-    } catch (err) {
-      setError(String(err || "Failed to fetch product"))
-    } finally {
-      setLoading(false)
+  const groupedData = groupByCategory(Data)
+
+  const scrollRow = (category, direction) => {
+    const el = rowRefs.current[category]
+    if (el) {
+      el.scrollBy({ left: direction === "left" ? -300 : 300, behavior: "smooth" })
     }
-  }
-
-  function handleRemove(id) {
-    setItems((s) => s.filter((it) => it.id !== id))
   }
 
   return (
@@ -54,40 +40,49 @@ export default function PriceTracker() {
       <main className="max-w-7xl mx-auto">
         <Header products={Data} />
 
-        {/* <div className="flex justify-center w-full">
-          <form
-            onSubmit={handleAdd}
-            className="flex gap-3 items-center w-full max-w-4xl p-3 border border-white/10 rounded-2xl bg-neutral-900 shadow-sm"
-          >
-            <Input
-              className="flex-1 bg-black text-white border-white/20 placeholder:text-white/60"
-              placeholder="Paste Amazon product URL or ASIN (e.g. https://www.amazon.in/dp/B08...)"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              disabled={loading}
-            />
-            <Button
-              type="submit"
-              disabled={loading}
-              className="shrink-0 bg-white text-black hover:bg-gray-200"
-            >
-              {loading ? "Working..." : "Track"}
-            </Button>
-          </form>
-        </div> */}
+        <div className="mt-8 space-y-12">
+          {Object.entries(groupedData).map(([category, products]) => (
+            <div key={category} className="relative">
 
+              <h2 className="text-xl font-bold mb-4">{category}</h2>
 
-        <section className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {Data.map((product) => (
-            <ProductPreviewCard key={product._id} product={product} />
+             {products.length > 5 && (
+               <>
+                 <button
+                   onClick={() => scrollRow(category, "left")}
+                   className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/70 p-2 rounded-full hover:bg-black transition"
+                 >
+                   <ChevronLeft className="w-6 h-6 text-white" />
+                 </button>
+
+                 <button
+                   onClick={() => scrollRow(category, "right")}
+                   className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/70 p-2 rounded-full hover:bg-black transition"
+                 >
+                   <ChevronRight className="w-6 h-6 text-white" />
+                 </button>
+               </>
+             )}
+             
+              <div
+                ref={(el) => (rowRefs.current[category] = el)}
+                className="flex space-x-6 overflow-x-auto scrollbar-custom pb-4 scroll-smooth"
+              >
+                {products.map((product) => (
+                  <div key={product._id} className="flex-shrink-0 w-56">
+                    <ProductPreviewCard product={product} />
+                  </div>
+                ))}
+              </div>
+
+            </div>
           ))}
-        </section>
+        </div>
 
         <footer className="mt-10 text-xs text-white/60 text-center">
-          Made with ❤️ — By Ramesh
+          Made with ❤️ — By Omnissiah
         </footer>
       </main>
-
     </div>
   )
 }
