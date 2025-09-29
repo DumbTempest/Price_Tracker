@@ -111,7 +111,7 @@ export default function ProductCategoryPage({ it, group }) {
         borderColor: color,
         backgroundColor: color + "80",
         tension: 0.3,
-        spanGaps: true,
+        spanGaps: false,
         hidden: !isCurrentProduct,
       },
       {
@@ -124,7 +124,7 @@ export default function ProductCategoryPage({ it, group }) {
         backgroundColor: color + "80",
         borderDash: [5, 5],
         tension: 0.3,
-        spanGaps: true,
+        spanGaps: false,
         hidden: !isCurrentProduct,
       },
     ];
