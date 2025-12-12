@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import Link from "next/link";
 
 ChartJS.register(
   CategoryScale,
@@ -21,18 +22,19 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-import Link from "next/link";
 
 export default function ProductCategoryPage({ it, group }) {
   function getPriceStats(history) {
     if (history.length === 0) return null;
 
-    // current should reflect the last entry as-is
-    const current = history[history.length - 1].price_INR;
+    const getPrice = (h) => h.price_Amazon_INR ?? h.price_Flipkart_INR;
 
-    // filter only for stats
-    const prices = history.map((h) => h.price_INR).filter((p) => p != null);
-    if (prices.length === 0) return { current, min: null, max: null, avg: null, trend: "stable" };
+    const lastEntry = history[history.length - 1];
+    const current = getPrice(lastEntry);
+
+    const prices = history.map(getPrice).filter((p) => p != null);
+    if (prices.length === 0)
+      return { current, min: null, max: null, avg: null, trend: "stable" };
 
     const min = Math.min(...prices);
     const max = Math.max(...prices);
@@ -40,7 +42,8 @@ export default function ProductCategoryPage({ it, group }) {
 
     let trend = "stable";
     if (history.length > 1) {
-      const prev = history[history.length - 2].price_INR;
+      const prevEntry = history[history.length - 2];
+      const prev = getPrice(prevEntry);
       if (current != null && prev != null) {
         if (current > prev) trend = "up";
         else if (current < prev) trend = "down";
@@ -52,15 +55,17 @@ export default function ProductCategoryPage({ it, group }) {
 
   function getCategoryStats(products) {
     const allPrices = products
-      .flatMap((p) => p.history.map((h) => h.price_INR))
+      .flatMap((p) =>
+        p.history.flatMap((h) => [h.price_Amazon_INR, h.price_Flipkart_INR])
+      )
       .filter((p) => typeof p === "number" && !isNaN(p));
 
     const latestPrices = products
-      .map((p) =>
-        p.history.length > 0
-          ? p.history[p.history.length - 1].price_INR
-          : null
-      )
+      .map((p) => {
+        if (p.history.length === 0) return null;
+        const lastHistory = p.history[p.history.length - 1];
+        return lastHistory.price_Amazon_INR ?? lastHistory.price_Flipkart_INR;
+      })
       .filter((p) => typeof p === "number" && !isNaN(p));
 
     if (allPrices.length === 0 || latestPrices.length === 0) return null;
@@ -92,19 +97,39 @@ export default function ProductCategoryPage({ it, group }) {
     "#ffecd2", "#fcb69f", "#a8edea", "#fed6e3",
   ];
 
-  const datasets = group.map((p, i) => {
+  const datasets = group.flatMap((p, i) => {
     const color = colors[i % colors.length];
-    return {
-      label: p.name,
-      data: rawDates.map((date) => {
-        const point = p.history.find((h) => h.date === date);
-        return point?.price_INR ?? null;
-      }),
-      borderColor: color,
-      backgroundColor: color + "80",
-      tension: 0.3,
-      spanGaps: true,
-    };
+    const isCurrentProduct = p._id === it._id;
+
+    const productDatasets = [
+      {
+        label: `${p.name} (Amazon)`,
+        data: rawDates.map((date) => {
+          const point = p.history.find((h) => h.date === date);
+          return point?.price_Amazon_INR ?? null;
+        }),
+        borderColor: color,
+        backgroundColor: color + "80",
+        tension: 0.3,
+        spanGaps: true,
+        hidden: !isCurrentProduct,
+      },
+      {
+        label: `${p.name} (Flipkart)`,
+        data: rawDates.map((date) => {
+          const point = p.history.find((h) => h.date === date);
+          return point?.price_Flipkart_INR ?? null;
+        }),
+        borderColor: color,
+        backgroundColor: color + "80",
+        borderDash: [5, 5],
+        tension: 0.3,
+        spanGaps: true,
+        hidden: !isCurrentProduct,
+      },
+    ];
+
+    return productDatasets.filter(dataset => dataset.data.some(price => price !== null));
   });
 
   const chartData = { labels, datasets };
@@ -114,6 +139,10 @@ export default function ProductCategoryPage({ it, group }) {
     maintainAspectRatio: false,
     plugins: {
       legend: { display: true, labels: { color: "white" } },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+      },
     },
     scales: {
       x: { ticks: { color: "white" }, grid: { color: "rgba(255,255,255,0.1)" } },
@@ -136,14 +165,26 @@ export default function ProductCategoryPage({ it, group }) {
         </div>
         <h1 className="text-2xl md:text-4xl font-extrabold mb-3 flex flex-wrap items-center gap-3">
           <span className="text-white">{it.name}</span>
-          <Link
-            href={it.url}
-            target="_blank"
-            rel="noreferrer"
-            className="px-3 py-1.5 text-sm rounded-lg bg-yellow-400 text-black font-medium hover:bg-yellow-500 transition"
-          >
-            See on Amazon →
-          </Link>
+          {it.url_Amazon && (
+            <Link
+              href={it.url_Amazon}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1.5 text-sm rounded-lg bg-yellow-400 text-black font-medium hover:bg-yellow-500 transition"
+            >
+              See on Amazon →
+            </Link>
+          )}
+          {it.url_Flipkart && (
+            <Link
+              href={it.url_Flipkart}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1.5 text-sm rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition"
+            >
+              See on Flipkart →
+            </Link>
+          )}
         </h1>
         {categoryStats && (
           <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm text-white/80">
@@ -173,7 +214,6 @@ export default function ProductCategoryPage({ it, group }) {
                     className="w-full h-full object-contain"
                   />
                 </div>
-
                 <div className="flex-1">
                   <div className="block text-xs font-medium mb-2 line-clamp-2">
                     {p.name}
@@ -204,7 +244,7 @@ export default function ProductCategoryPage({ it, group }) {
                         </span>
                       </div>
                       <div className="text-[10px] text-white/60">
-                        (min {stats.min}, max {stats.max})
+                        {stats.min && `(min ₹${stats.min}, max ₹${stats.max})`}
                       </div>
                     </div>
                   )}

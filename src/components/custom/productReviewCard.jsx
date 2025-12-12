@@ -3,9 +3,11 @@
 import Link from "next/link"
 
 export default function ProductPreviewCard({ product }) {
-  const latest = product.history?.length
-    ? product.history[product.history.length - 1].price_INR
-    : null
+  let latest = null
+  if (product.history?.length) {
+    const lastEntry = product.history[product.history.length - 1]
+    latest = lastEntry.price_Amazon_INR ?? lastEntry.price_Flipkart_INR ?? null
+  }
 
   return (
     <Link
